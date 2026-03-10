@@ -1,0 +1,550 @@
+================================================================================
+AI AGENT PROMPT: COMPLETE HELO-MED RETAILER PROJECT SETUP
+================================================================================
+
+CONTEXT:
+--------
+I've extracted retailer files from the main Helo-Med project using a PowerShell 
+script. The basic structure and files are in place at `d:\project\helo-med-retailer\`, 
+but the project needs completion to be functional.
+
+YOUR TASK:
+----------
+Complete the retailer project setup by creating missing files, fixing imports, 
+and ensuring the project builds successfully.
+
+
+================================================================================
+STEP 1: CREATE MISSING CORE FILES
+================================================================================
+
+FILE: src/main.tsx
+------------------
+Create this file with the following content:
+
+```typescript
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.tsx'
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+```
+
+
+FILE: src/index.css
+-------------------
+- Copy all CSS variables and base styles from the original project's src/index.css
+- Include global resets, body styles, and design tokens
+- Make sure to include: font-family, color variables, box-sizing reset, etc.
+
+
+FILE: src/App.tsx
+-----------------
+Create the main application component with:
+- Import React Router (BrowserRouter, Routes, Route, Navigate)
+- Import AuthProvider from './context/AuthContext'
+- Import Layout component from './components/Layout'
+- Import all pages: DashboardPage, AllProductsPage, ProductsPage, OrdersPage, 
+  PaymentsPage, ProfilePage, LoginPage, SignupPage
+- Set up routing structure:
+  * /login - Public route (LoginPage)
+  * /signup - Public route (SignupPage)
+  * / - Redirect to /dashboard
+  * /dashboard - Protected, wrapped in Layout
+  * /all-products - Protected, wrapped in Layout
+  * /products - Protected, wrapped in Layout
+  * /orders - Protected, wrapped in Layout
+  * /payments - Protected, wrapped in Layout
+  * /profile - Protected, wrapped in Layout
+- Create ProtectedRoute component that:
+  * Checks localStorage.getItem('helo_med_retailer_token')
+  * Redirects to /login if no token
+  * Renders children if token exists
+- Wrap entire app in AuthProvider
+- Use BrowserRouter for routing
+
+
+FILE: src/App.css
+-----------------
+Copy all CSS variables from original src/App.css including:
+- Color variables: --primary, --secondary, --accent, --text, --bg, --border, etc.
+- Radius variables: --radius-sm, --radius-md, --radius-lg
+- Container width: --container-max
+- Spacing variables if any
+- Any global utility classes
+
+
+================================================================================
+STEP 2: CREATE AUTHENTICATION PAGES
+================================================================================
+
+FILE: src/pages/LoginPage.tsx
+------------------------------
+Create OTP-based login for retailers:
+- Phone number input field (+91 prefix)
+- "Send OTP" button
+- OTP input field (6 digits) - shown after OTP sent
+- "Verify OTP" button
+- Use sendOtp and verifyOtp functions from '../api/auth'
+- On successful verification:
+  * Store token: localStorage.setItem('helo_med_retailer_token', token)
+  * Store user data: localStorage.setItem('helo_med_retailer_user', JSON.stringify(user))
+  * Navigate to '/dashboard'
+- Show loading states during API calls
+- Display error messages
+- Style with existing retailer page CSS patterns (check Pages.css)
+- Add link to /signup for new retailers
+- Include logo and branding
+
+
+FILE: src/pages/SignupPage.tsx
+-------------------------------
+Create multi-step retailer registration:
+- Step 1: Basic Details
+  * name (text input)
+  * phone (text input with +91)
+  * email (email input)
+  * password (password input)
+- Step 2: Shop Details
+  * shopName (text input)
+  * description (textarea)
+  * address (text input)
+  * latitude (number input)
+  * longitude (number input)
+- Step 3: Documents
+  * GSTIN certificate (file upload)
+  * FSSAI license (file upload)
+  * Drug license (file upload)
+  * PAN card (file upload)
+  * Store images (multiple file upload)
+- Include image compression function before upload
+- Form validation for all fields
+- Use signup function from '../api/auth'
+- Navigate to '/login' on success with success message
+- Show progress indicator for multi-step form
+- Add link to /login for existing retailers
+
+
+FILE: src/pages/LoginPage.css (optional)
+-----------------------------------------
+If needed, create separate CSS file for login page styling
+
+
+FILE: src/pages/SignupPage.css (optional)
+------------------------------------------
+If needed, create separate CSS file for signup page styling
+
+
+================================================================================
+STEP 3: FIX ALL IMPORT PATHS
+================================================================================
+
+Update imports in ALL files:
+----------------------------
+
+API IMPORTS:
+1. '../api/retailerClient' → '../api/client'
+2. '../api/retailerAuth' → '../api/auth'
+3. '../api/retailerProducts' → '../api/products'
+4. '../api/retailerOrders' → '../api/orders'
+5. '../api/retailerPayments' → '../api/payments'
+
+CONTEXT IMPORTS:
+6. '../context/RetailerAuthContext' → '../context/AuthContext'
+7. 'RetailerAuthProvider' → 'AuthProvider'
+8. 'useRetailerAuth' → 'useAuth'
+
+COMPONENT IMPORTS:
+9. '../components/RetailerLayout' → '../components/Layout'
+10. '<RetailerLayout>' → '<Layout>'
+
+NAVIGATION PATHS:
+11. Remove '/retailer' prefix from ALL navigate() calls:
+    - navigate('/retailer/dashboard') → navigate('/dashboard')
+    - navigate('/retailer/products') → navigate('/products')
+    - navigate('/retailer/orders') → navigate('/orders')
+    - navigate('/retailer/payments') → navigate('/payments')
+    - navigate('/retailer/profile') → navigate('/profile')
+    - navigate('/retailer/all-products') → navigate('/all-products')
+
+ROUTE PATHS:
+12. Remove '/retailer' prefix from all <Route path> attributes
+
+FILES TO UPDATE:
+- src/pages/DashboardPage.tsx
+- src/pages/AllProductsPage.tsx
+- src/pages/ProductsPage.tsx
+- src/pages/OrdersPage.tsx
+- src/pages/PaymentsPage.tsx
+- src/pages/ProfilePage.tsx
+- src/components/Layout.tsx
+- src/context/AuthContext.tsx
+
+
+================================================================================
+STEP 4: CREATE UTILITY FILES
+================================================================================
+
+FILE: src/utils/api.ts
+----------------------
+```typescript
+// Image URL helper
+export const getImageUrl = (key: string | undefined | null): string => {
+  if (!key) return '';
+  if (key.startsWith('http')) return key;
+  const baseUrl = import.meta.env.VITE_S3_BASE_URL || 'https://helomed.s3.ap-south-2.amazonaws.com';
+  return `${baseUrl}/${key}`;
+};
+
+// Response unwrapper for inconsistent API responses
+export const unwrapData = (response: any) => {
+  return response?.data?.data ?? response?.data ?? response;
+};
+
+// Format date helper
+export const formatDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+// Format currency helper
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0
+  }).format(amount);
+};
+```
+
+
+FILE: src/types/index.ts
+-------------------------
+Create TypeScript interfaces for:
+
+```typescript
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  mrp?: number;
+  stock?: number;
+  category?: string;
+  imageUrl?: string;
+  manufacturer?: string;
+  composition?: string;
+  prescription_required?: boolean;
+}
+
+export interface Order {
+  id: string;
+  orderNumber?: string;
+  items: OrderItem[];
+  totalAmount: number;
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  createdAt: string;
+  deliveryAddress?: string;
+  customerName?: string;
+  customerPhone?: string;
+}
+
+export interface OrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  imageUrl?: string;
+}
+
+export interface Payment {
+  id: string;
+  amount: number;
+  status: 'pending' | 'completed' | 'failed';
+  transactionId?: string;
+  createdAt: string;
+  orderId?: string;
+  paymentMethod?: string;
+}
+
+export interface RetailerProfile {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  shopName: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  gstinUrl?: string;
+  fssaiUrl?: string;
+  drugLicenseUrl?: string;
+  panCardUrl?: string;
+  storeImages?: string[];
+  isVerified?: boolean;
+  createdAt?: string;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+}
+```
+
+
+================================================================================
+STEP 5: UPDATE API CLIENT BASE URL
+================================================================================
+
+FILE: src/api/client.ts
+-----------------------
+Verify and update:
+1. baseURL should use: import.meta.env.VITE_API_BASE_URL
+2. Token interceptor should use: 'helo_med_retailer_token' (NOT 'helo_med_token')
+3. Ensure request interceptor adds token to headers
+4. Ensure response interceptor handles 401 errors (redirect to login)
+
+Example:
+```typescript
+import axios from 'axios';
+
+const client = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://helo.thynxai.cloud',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor
+client.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('helo_med_retailer_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('helo_med_retailer_token');
+      localStorage.removeItem('helo_med_retailer_user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default client;
+```
+
+
+================================================================================
+STEP 6: ADD TOAST CONTEXT (IF NEEDED)
+================================================================================
+
+FILE: src/context/ToastContext.tsx
+-----------------------------------
+If pages use toast notifications, create:
+
+```typescript
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+
+interface ToastContextType {
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+}
+
+const ToastContext = createContext<ToastContextType | undefined>(undefined);
+
+export const ToastProvider = ({ children }: { children: ReactNode }) => {
+  const [toast, setToast] = useState<{ message: string; type: string } | null>(null);
+
+  const showToast = useCallback((message: string, type = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  return (
+    <ToastContext.Provider value={{ showToast }}>
+      {children}
+      {toast && (
+        <div className={`toast toast-${toast.type}`}>
+          {toast.message}
+        </div>
+      )}
+    </ToastContext.Provider>
+  );
+};
+
+export const useToast = () => {
+  const context = useContext(ToastContext);
+  if (!context) throw new Error('useToast must be used within ToastProvider');
+  return context;
+};
+```
+
+OR create simple utility:
+
+FILE: src/utils/toast.ts
+-------------------------
+```typescript
+export const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  // Simple implementation or use existing Toast component
+  console.log(`[${type.toUpperCase()}] ${message}`);
+};
+```
+
+
+================================================================================
+STEP 7: VERIFICATION CHECKLIST
+================================================================================
+
+After completing all steps, verify:
+
+1. ✅ File Creation Check:
+   - [ ] src/main.tsx exists
+   - [ ] src/index.css exists
+   - [ ] src/App.tsx exists
+   - [ ] src/App.css exists
+   - [ ] src/pages/LoginPage.tsx exists
+   - [ ] src/pages/SignupPage.tsx exists
+   - [ ] src/utils/api.ts exists
+   - [ ] src/types/index.ts exists
+
+2. ✅ Import Updates Check:
+   - [ ] All 'retailer*' imports updated to plain names
+   - [ ] All 'useRetailerAuth' changed to 'useAuth'
+   - [ ] All '/retailer' paths removed from navigation
+   - [ ] All '/retailer' prefixes removed from routes
+
+3. ✅ Configuration Check:
+   - [ ] API client uses VITE_API_BASE_URL
+   - [ ] Token key is 'helo_med_retailer_token'
+   - [ ] Vite dev server port is 5001
+
+4. ✅ Build Check:
+   Run these commands and verify no errors:
+   ```bash
+   cd d:\project\helo-med-retailer
+   npm install
+   npm run build
+   ```
+
+5. ✅ File List:
+   List all files created and modified with their paths
+
+6. ✅ Final Test:
+   ```bash
+   npm run dev
+   ```
+   Verify app starts on http://localhost:5001
+
+
+================================================================================
+EXPECTED OUTCOME
+================================================================================
+
+A fully functional standalone retailer dashboard that:
+- ✅ Builds without TypeScript errors
+- ✅ Has working authentication (login/signup)
+- ✅ Has protected routing
+- ✅ Uses correct API endpoints
+- ✅ Uses correct token storage
+- ✅ Is ready for `npm run dev`
+
+
+================================================================================
+IMPORTANT NOTES
+================================================================================
+
+1. TOKEN STORAGE KEY:
+   - Must use 'helo_med_retailer_token' (NOT 'helo_med_token')
+   - Also store user data as 'helo_med_retailer_user'
+
+2. API CONFIGURATION:
+   - Base URL: https://helo.thynxai.cloud
+   - S3 URL: https://helomed.s3.ap-south-2.amazonaws.com
+
+3. PORT CONFIGURATION:
+   - Dev server: port 5001 (already in vite.config.ts)
+   - Main project uses port 5000
+
+4. ROUTING:
+   - NO '/retailer' prefix in paths
+   - This is now a standalone retailer app
+   - Root path '/' redirects to '/dashboard'
+
+5. STYLING:
+   - Use same CSS patterns as original project
+   - Plain CSS with CSS variables (no Tailwind)
+   - Import lucide-react icons individually
+
+6. AUTHENTICATION FLOW:
+   - OTP-based only (no password login)
+   - Phone number + OTP verification
+   - Store token and user on success
+   - Redirect to dashboard after login
+
+7. CONTEXT STRUCTURE:
+   - AuthProvider wraps entire app
+   - ToastProvider (if using toasts)
+   - No CartContext needed in retailer app
+
+
+================================================================================
+SUMMARY OF CHANGES NEEDED
+================================================================================
+
+FILES TO CREATE (8):
+1. src/main.tsx
+2. src/index.css
+3. src/App.tsx
+4. src/App.css
+5. src/pages/LoginPage.tsx
+6. src/pages/SignupPage.tsx
+7. src/utils/api.ts
+8. src/types/index.ts
+
+FILES TO UPDATE (~15):
+1. src/api/client.ts (verify token key)
+2. src/context/AuthContext.tsx (update imports/names)
+3. src/components/Layout.tsx (update imports/paths)
+4. src/pages/DashboardPage.tsx (update imports/paths)
+5. src/pages/AllProductsPage.tsx (update imports/paths)
+6. src/pages/ProductsPage.tsx (update imports/paths)
+7. src/pages/OrdersPage.tsx (update imports/paths)
+8. src/pages/PaymentsPage.tsx (update imports/paths)
+9. src/pages/ProfilePage.tsx (update imports/paths)
+10-15. Other files that reference retailer-specific names
+
+COMMANDS TO RUN:
+```bash
+cd d:\project\helo-med-retailer
+npm install
+npm run build
+npm run dev
+```
+
+
+================================================================================
+END OF PROMPT
+================================================================================
+
+Copy this entire file and provide it to your AI agent. The agent should follow
+each step systematically to complete the retailer project setup.
