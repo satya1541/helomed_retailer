@@ -456,9 +456,9 @@ const RetailerProductsPage = () => {
 
                         <div className="modern-modal-body">
                             {/* Product Details */}
-                            <div style={{ marginBottom: '24px' }}>
-                                <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '12px', color: '#171717' }}>Product Details</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <div style={{ marginBottom: '16px' }}>
+                                <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '8px', color: '#171717' }}>Product Details</h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                                     <div>
                                         <label className="form-label">Product Name</label>
                                         <input 
@@ -499,9 +499,9 @@ const RetailerProductsPage = () => {
                             </div>
 
                             {/* Pricing & Inventory */}
-                            <div style={{ marginBottom: '24px' }}>
-                                <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '12px', color: '#171717' }}>Pricing & Inventory</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
+                            <div style={{ marginBottom: '16px' }}>
+                                <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '8px', color: '#171717' }}>Pricing & Inventory</h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px' }}>
                                     <div>
                                         <label className="form-label">MRP</label>
                                         <input 
@@ -562,9 +562,9 @@ const RetailerProductsPage = () => {
                             </div>
 
                             {/* Classification */}
-                            <div style={{ marginBottom: '24px' }}>
-                                <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '12px', color: '#171717' }}>Classification</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <div style={{ marginBottom: '16px' }}>
+                                <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '8px', color: '#171717' }}>Classification</h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                                     <div>
                                         <label className="form-label">Category</label>
                                         <select
@@ -621,19 +621,19 @@ const RetailerProductsPage = () => {
                             </div>
 
                             {/* Additional Info */}
-                            <div style={{ marginBottom: '24px' }}>
-                                <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '12px', color: '#171717' }}>Additional Info</h4>
+                            <div style={{ marginBottom: '0' }}>
+                                <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '8px', color: '#171717' }}>Additional Info</h4>
                                 <div>
                                     <label className="form-label">Description</label>
                                     <textarea 
                                         className="form-textarea"
                                         value={form.description} 
                                         onChange={(e) => setForm({ ...form, description: e.target.value })} 
-                                        rows={3} 
+                                        rows={2} 
                                         placeholder="Product description..." 
                                     />
                                 </div>
-                                <div style={{ marginTop: '12px' }}>
+                                <div style={{ marginTop: '8px' }}>
                                     <label className="form-label">Tags</label>
                                     <input 
                                         className="form-input"
@@ -642,7 +642,7 @@ const RetailerProductsPage = () => {
                                         placeholder="e.g. fever, pain" 
                                     />
                                 </div>
-                                <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+                                <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                                         <input
                                             type="checkbox"
@@ -660,7 +660,7 @@ const RetailerProductsPage = () => {
                                         <span style={{ fontSize: '0.875rem', color: '#525252' }}>Loose Available</span>
                                     </label>
                                 </div>
-                                <div style={{ marginTop: '12px' }}>
+                                <div style={{ marginTop: '8px' }}>
                                     <label className="form-label">Product Image</label>
                                     <input 
                                         className="form-input"

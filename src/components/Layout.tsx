@@ -7,7 +7,7 @@ import { Footer } from '@/components/ui/modem-animated-footer';
 import './Layout.css';
 
 const RetailerLayout = ({ children }: { children: React.ReactNode }) => {
-    const { logout } = useRetailerAuth();
+    const { logout, retailer } = useRetailerAuth();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -48,7 +48,7 @@ const RetailerLayout = ({ children }: { children: React.ReactNode }) => {
                         <img src="/images/logo.png" alt="HeloMed" />
                         <div className="retailer-brand-text">
                             <h3>Retailer</h3>
-                            <p>HeloMed</p>
+                            <p>{retailer?.shop_name || 'HeloMed'}</p>
                         </div>
                     </div>
                 </div>
@@ -70,7 +70,7 @@ const RetailerLayout = ({ children }: { children: React.ReactNode }) => {
             </main>
 
             <Footer
-                brandName="HeloMed"
+                brandName={retailer?.shop_name || "HeloMed"}
                 navLinks={footerNavLinks}
                 creatorName="Udi Digi Swasthyatech Pvt Ltd"
                 creatorUrl="https://helomed.app/"

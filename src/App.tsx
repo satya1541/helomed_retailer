@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { RetailerAuthProvider, useRetailerAuth } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
 
 // Pages
 import LoginPage from './pages/LoginPage';
@@ -36,6 +37,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <RetailerAuthProvider>
+      <SocketProvider>
       <Router>
         <Routes>
           {/* Public Routes */}
@@ -117,6 +119,7 @@ function App() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
+      </SocketProvider>
     </RetailerAuthProvider>
   );
 }

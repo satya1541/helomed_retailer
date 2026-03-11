@@ -1,12 +1,15 @@
-import { useEffect, useState, useMemo } from 'react';
-import { X, ShoppingBag, Filter, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { X, ShoppingBag, Filter, Search, Wifi, WifiOff } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getRetailerOrderDetails, getRetailerOrders, updateRetailerOrderStatus } from '@/api/orders';
 import { ORDER_STATUS, ORDER_STATUS_LABELS } from '@/constants';
+import { useSocket } from '@/context/SocketContext';
 import './Modern.css';
 
 const RetailerOrdersPage = () => {
+    const { socket, isConnected } = useSocket();
     const [orders, setOrders] = useState<any[]>([]);
+    const [allOrdersForSearch, setAllOrdersForSearch] = useState<any[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
@@ -17,6 +20,9 @@ const RetailerOrdersPage = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchMode, setIsSearchMode] = useState(false);
+    const [flashIds, setFlashIds] = useState<Set<number>>(new Set());
+    const [liveToast, setLiveToast] = useState<string | null>(null);
 
     const extractOrders = (payload: any): any[] => {
         if (Array.isArray(payload)) return payload;
@@ -137,14 +143,128 @@ const RetailerOrdersPage = () => {
         }
     };
 
+    const fetchAllOrdersForSearch = async () => {
+        setLoading(true);
+        try {
+            const params: any = {
+                page: 1,
+                limit: 5000
+            };
+            if (statusFilter) params.order_status = Number(statusFilter);
+            if (startDate) params.from = startDate;
+            if (endDate) params.to = endDate;
+
+            console.log('🔍 Fetching all orders for search with limit 5000');
+
+            const data = await getRetailerOrders(params);
+            const list = extractOrders(data);
+
+            console.log('📥 All orders received for search:', list.length);
+
+            setAllOrdersForSearch(list);
+            setIsSearchMode(true);
+        } catch (error) {
+            console.error('Error fetching all orders:', error);
+            setNotice({ type: 'error', text: 'Failed to load orders for search. Please try again.' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Flash a row highlight for 2s then clear
+    const flashRow = useCallback((orderId: number) => {
+        setFlashIds(prev => new Set(prev).add(orderId));
+        setTimeout(() => {
+            setFlashIds(prev => {
+                const next = new Set(prev);
+                next.delete(orderId);
+                return next;
+            });
+        }, 2000);
+    }, []);
+
+    // Real-time WebSocket listener
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleOrderUpdate = (data: { order_id: number; order_status: number }) => {
+            const { order_id, order_status } = data;
+
+            setOrders(prev => {
+                const found = prev.some(o => o.id === order_id || o.order_id === order_id);
+                if (!found) {
+                    // New order not in current page — refresh
+                    fetchOrders();
+                    return prev;
+                }
+                return prev.map(o =>
+                    o.id === order_id || o.order_id === order_id
+                        ? { ...o, order_status }
+                        : o
+                );
+            });
+
+            setAllOrdersForSearch(prev =>
+                prev.map(o =>
+                    o.id === order_id || o.order_id === order_id
+                        ? { ...o, order_status }
+                        : o
+                )
+            );
+
+            setSelectedOrder((prev: any) =>
+                prev && (prev.id === order_id || prev.order_id === order_id)
+                    ? { ...prev, order_status }
+                    : prev
+            );
+
+            flashRow(order_id);
+
+            const label = ORDER_STATUS_LABELS[order_status] || `Status ${order_status}`;
+            setLiveToast(`Order updated → ${label}`);
+            setTimeout(() => setLiveToast(null), 3000);
+        };
+
+        socket.on('order_status_updated', handleOrderUpdate);
+        return () => {
+            socket.off('order_status_updated', handleOrderUpdate);
+        };
+    }, [socket, flashRow]);
+
     useEffect(() => {
         setNotice(null);
-        fetchOrders();
+        
+        // Debounce search with 500ms delay
+        const debounceTimer = setTimeout(() => {
+            if (searchQuery.trim()) {
+                // When searching, fetch all orders
+                if (!isSearchMode) {
+                    fetchAllOrdersForSearch();
+                }
+            } else {
+                // When search is cleared, go back to normal pagination
+                if (isSearchMode) {
+                    setIsSearchMode(false);
+                    fetchOrders();
+                }
+            }
+        }, 1000);
+
+        // Cleanup function - cancel timer if searchQuery changes before 500ms
+        return () => clearTimeout(debounceTimer);
+    }, [searchQuery]);
+
+    useEffect(() => {
+        setNotice(null);
+        if (!isSearchMode) {
+            fetchOrders();
+        }
     }, [page, statusFilter, startDate, endDate]);
 
     // Filter orders by search query and status (client-side fallback since backend doesn't filter)
     const filteredOrders = useMemo(() => {
-        let filtered = orders;
+        // Use all orders when searching, otherwise use paginated orders
+        let filtered = isSearchMode ? allOrdersForSearch : orders;
         
         // Filter by status first (backend fallback)
         if (statusFilter) {
@@ -161,12 +281,17 @@ const RetailerOrdersPage = () => {
             filtered = filtered.filter((order) => {
                 const orderNumber = (order.order_number || '').toLowerCase();
                 const totalAmount = (order.total_amount || '').toString();
-                return orderNumber.includes(query) || totalAmount.includes(query);
+                const userName = (order.user?.name || '').toLowerCase();
+                const userPhone = (order.user?.phone || '').toString();
+                return orderNumber.includes(query) || 
+                       totalAmount.includes(query) ||
+                       userName.includes(query) ||
+                       userPhone.includes(query);
             });
         }
         
         return filtered;
-    }, [orders, searchQuery, statusFilter]);
+    }, [orders, allOrdersForSearch, searchQuery, statusFilter, isSearchMode]);
 
     const handleView = async (order: any) => {
         try {
@@ -182,12 +307,36 @@ const RetailerOrdersPage = () => {
         setNotice(null);
         try {
             await updateRetailerOrderStatus(orderId, { order_status: status });
+            
+            // Update order status locally without refetching
+            setOrders(prevOrders => 
+                prevOrders.map(order => 
+                    order.id === orderId || order.order_id === orderId
+                        ? { ...order, order_status: status }
+                        : order
+                )
+            );
+            
+            // Also update search orders if in search mode
+            if (isSearchMode) {
+                setAllOrdersForSearch(prevOrders => 
+                    prevOrders.map(order => 
+                        order.id === orderId || order.order_id === orderId
+                            ? { ...order, order_status: status }
+                            : order
+                    )
+                );
+            }
+            
+            // Update selected order
+            setSelectedOrder((prev: any) => prev ? { ...prev, order_status: status } : null);
+            
             setNotice({ type: 'success', text: 'Order status updated successfully!' });
-            await fetchOrders();
+            
             setTimeout(() => {
                 setSelectedOrder(null);
                 setNotice(null);
-            }, 1000);
+            }, 1500);
         } catch (error: any) {
             setNotice({ type: 'error', text: error?.response?.data?.message || 'Failed to update order status.' });
         } finally {
@@ -213,10 +362,76 @@ const RetailerOrdersPage = () => {
                 transition={{ duration: 0.3 }}
             >
                 <div className="modern-header-content">
-                    <h1>Orders</h1>
-                    <p>Track and update order status.</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div>
+                            <h1>Orders</h1>
+                            <p>Track and update order status.</p>
+                        </div>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '4px 10px',
+                            borderRadius: '999px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            background: isConnected ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.08)',
+                            color: isConnected ? '#16a34a' : '#dc2626',
+                            border: `1px solid ${isConnected ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.2)'}`,
+                            transition: 'all 0.4s'
+                        }}>
+                            {isConnected ? (
+                                <>
+                                    <span style={{
+                                        width: 7,
+                                        height: 7,
+                                        borderRadius: '50%',
+                                        background: '#22c55e',
+                                        boxShadow: '0 0 0 0 rgba(34,197,94,0.6)',
+                                        animation: 'liveping 1.5s infinite'
+                                    }} />
+                                    <Wifi size={12} />
+                                    Live
+                                </>
+                            ) : (
+                                <>
+                                    <WifiOff size={12} />
+                                    Offline
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </motion.div>
+
+            {/* Live toast notification */}
+            <AnimatePresence>
+                {liveToast && (
+                    <motion.div
+                        key="live-toast"
+                        initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                        transition={{ duration: 0.2 }}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '8px 14px',
+                            borderRadius: '8px',
+                            background: 'rgba(34,197,94,0.1)',
+                            border: '1px solid rgba(34,197,94,0.25)',
+                            color: '#15803d',
+                            fontSize: '0.8125rem',
+                            fontWeight: 500,
+                            marginBottom: '4px'
+                        }}
+                    >
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
+                        {liveToast}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Filters */}
             <motion.div
@@ -377,7 +592,13 @@ const RetailerOrdersPage = () => {
                                         <motion.tr
                                             key={order.id || order.order_id}
                                             initial={{ opacity: 0, x: -10 }}
-                                            animate={{ opacity: 1, x: 0 }}
+                                            animate={{
+                                                opacity: 1,
+                                                x: 0,
+                                                backgroundColor: flashIds.has(order.id || order.order_id)
+                                                    ? ['#f0fdf4', '#ffffff']
+                                                    : '#ffffff'
+                                            }}
                                             transition={{ duration: 0.2, delay: index * 0.05 }}
                                         >
                                             <td>
@@ -409,8 +630,8 @@ const RetailerOrdersPage = () => {
                         </div>
                     )}
 
-                    {/* Pagination */}
-                    {filteredOrders.length > 0 && totalPages > 1 && (
+                    {/* Pagination - Hidden in search mode */}
+                    {!isSearchMode && filteredOrders.length > 0 && totalPages > 1 && (
                         <div className="pagination">
                             <button
                                 className="pagination-btn"
@@ -429,6 +650,13 @@ const RetailerOrdersPage = () => {
                             >
                                 Next
                             </button>
+                        </div>
+                    )}
+                    
+                    {/* Search results info */}
+                    {isSearchMode && searchQuery && (
+                        <div style={{ textAlign: 'center', padding: '1rem', color: '#737373', fontSize: '0.875rem' }}>
+                            Found {filteredOrders.length} orders matching "{searchQuery}"
                         </div>
                     )}
                 </div>
@@ -469,11 +697,11 @@ const RetailerOrdersPage = () => {
                         <div className="modern-modal-body">
                             {/* Customer Information */}
                             {selectedOrder.user && (
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '12px', color: '#171717' }}>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '8px', color: '#171717' }}>
                                         Customer Information
                                     </h4>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                                         <div>
                                             <div style={{ fontSize: '0.75rem', color: '#737373', marginBottom: '4px' }}>Name</div>
                                             <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{selectedOrder.user.name || '--'}</div>
@@ -486,7 +714,7 @@ const RetailerOrdersPage = () => {
                                     {selectedOrder.address && (
                                         <div style={{ 
                                             background: '#fafafa', 
-                                            padding: '12px', 
+                                            padding: '8px', 
                                             borderRadius: '8px', 
                                             border: '1px solid #e5e5e5' 
                                         }}>
@@ -505,10 +733,10 @@ const RetailerOrdersPage = () => {
                             )}
 
                             {/* Order Items */}
-                            <div style={{ marginBottom: '24px' }}>
-                                <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '12px', color: '#171717' }}>
-                                    Order Items
-                                </h4>
+                            <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '8px', color: '#171717' }}>
+                                        Order Items
+                                    </h4>
                                 {(selectedOrder.items || []).length === 0 ? (
                                     <p style={{ color: '#a3a3a3', textAlign: 'center', padding: '1rem' }}>
                                         No item details available for this order.
@@ -520,7 +748,7 @@ const RetailerOrdersPage = () => {
                                                 display: 'flex',
                                                 justifyContent: 'space-between',
                                                 alignItems: 'center',
-                                                padding: '12px',
+                                                padding: '8px',
                                                 background: '#fafafa',
                                                 border: '1px solid #e5e5e5',
                                                 borderRadius: '8px'
@@ -545,31 +773,31 @@ const RetailerOrdersPage = () => {
                             {/* Order Summary */}
                             <div style={{
                                 background: '#fafafa',
-                                padding: '16px',
+                                padding: '12px',
                                 borderRadius: '8px',
                                 border: '1px solid #e5e5e5',
-                                marginBottom: '16px'
+                                marginBottom: '12px'
                             }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.875rem' }}>
                                     <span style={{ color: '#525252' }}>Subtotal</span>
                                     <span>₹{selectedOrder.subtotal ?? 0}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.875rem' }}>
                                     <span style={{ color: '#525252' }}>Delivery Fee</span>
                                     <span>₹{selectedOrder.delivery_fee ?? 0}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.875rem' }}>
                                     <span style={{ color: '#525252' }}>Discount</span>
                                     <span style={{ color: '#16a34a' }}>-₹{selectedOrder.discount_amount ?? 0}</span>
                                 </div>
                                 {selectedOrder.cash_handling_fee > 0 && (
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.875rem' }}>
                                         <span style={{ color: '#525252' }}>Cash Handling Fee</span>
                                         <span>₹{selectedOrder.cash_handling_fee ?? 0}</span>
                                     </div>
                                 )}
                                 {selectedOrder.taxes_and_fee > 0 && (
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.875rem' }}>
                                         <span style={{ color: '#525252' }}>Taxes & Fees</span>
                                         <span>₹{selectedOrder.taxes_and_fee ?? 0}</span>
                                     </div>
@@ -577,8 +805,8 @@ const RetailerOrdersPage = () => {
                                 <div style={{
                                     display: 'flex',
                                     justifyContent: 'space-between',
-                                    paddingTop: '12px',
-                                    marginTop: '12px',
+                                    paddingTop: '8px',
+                                    marginTop: '8px',
                                     borderTop: '1px solid #e5e5e5',
                                     fontWeight: 600,
                                     fontSize: '1rem'
@@ -587,27 +815,22 @@ const RetailerOrdersPage = () => {
                                     <span>₹{selectedOrder.total_amount ?? 0}</span>
                                 </div>
                             </div>
-
-                            {/* Actions */}
-                            {getAvailableActions(selectedOrder.order_status).length > 0 && (
-                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                    {getAvailableActions(selectedOrder.order_status).map((action) => (
-                                        <button
-                                            key={action.value}
-                                            className="btn btn-primary"
-                                            onClick={() => handleStatusChange(selectedOrder.id, action.value)}
-                                            disabled={actionLoading}
-                                        >
-                                            {actionLoading ? 'Updating...' : action.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
                         </div>
 
-                        <div className="modern-modal-footer">
-                            <button className="btn btn-secondary" onClick={() => setSelectedOrder(null)}>Close</button>
-                        </div>
+                        {getAvailableActions(selectedOrder.order_status).length > 0 && (
+                            <div className="modern-modal-footer">
+                                {getAvailableActions(selectedOrder.order_status).map((action) => (
+                                    <button
+                                        key={action.value}
+                                        className="btn btn-primary"
+                                        onClick={() => handleStatusChange(selectedOrder.id, action.value)}
+                                        disabled={actionLoading}
+                                    >
+                                        {actionLoading ? 'Updating...' : action.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </motion.div>
                 </div>
             )}
