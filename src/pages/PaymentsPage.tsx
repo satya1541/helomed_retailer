@@ -19,6 +19,8 @@ const RetailerPaymentsPage = () => {
     const [payouts, setPayouts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [request, setRequest] = useState({ amount: '', account_number: '', ifsc_code: '', account_holder_name: '' });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [payoutNotice, setPayoutNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     const getOrderStatusLabel = (status?: number) => {
         const map: Record<number, string> = {
@@ -79,17 +81,27 @@ const RetailerPaymentsPage = () => {
     }, []);
 
     const handlePayoutRequest = async () => {
-        if (!request.amount) return;
-        await requestRetailerPayout({
-            amount: Number(request.amount),
-            bank_details: {
-                account_number: request.account_number,
-                ifsc_code: request.ifsc_code,
-                account_holder_name: request.account_holder_name
-            }
-        });
-        setRequest({ amount: '', account_number: '', ifsc_code: '', account_holder_name: '' });
-        fetchData();
+        if (!request.amount || isSubmitting) return;
+        setIsSubmitting(true);
+        setPayoutNotice(null);
+        try {
+            await requestRetailerPayout({
+                amount: Number(request.amount),
+                bank_details: {
+                    account_number: request.account_number,
+                    ifsc_code: request.ifsc_code,
+                    account_holder_name: request.account_holder_name
+                }
+            });
+            // Only clear the form on success
+            setRequest({ amount: '', account_number: '', ifsc_code: '', account_holder_name: '' });
+            setPayoutNotice({ type: 'success', text: 'Payout request submitted successfully!' });
+            fetchData();
+        } catch (error: any) {
+            setPayoutNotice({ type: 'error', text: error?.response?.data?.message || 'Failed to submit payout request. Please try again.' });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (loading) {
@@ -219,13 +231,18 @@ const RetailerPaymentsPage = () => {
                                         placeholder="Enter account holder name"
                                     />
                                 </div>
+                                {payoutNotice && (
+                                    <div className={`modern-alert modern-alert-${payoutNotice.type === 'success' ? 'success' : 'error'}`} style={{ marginTop: '4px' }}>
+                                        {payoutNotice.text}
+                                    </div>
+                                )}
                                 <button 
                                     className="btn btn-primary" 
                                     onClick={handlePayoutRequest}
-                                    disabled={!request.amount}
+                                    disabled={!request.amount || isSubmitting}
                                     style={{ marginTop: '8px' }}
                                 >
-                                    Submit Request
+                                    {isSubmitting ? 'Submitting...' : 'Submit Request'}
                                 </button>
                             </div>
                         </div>

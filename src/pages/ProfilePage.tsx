@@ -249,14 +249,22 @@ const RetailerProfilePage = () => {
                                     <Landmark size={18} style={{ marginTop: '2px', color: '#737373', flexShrink: 0 }} />
                                     <div style={{ flex: 1 }}>
                                         <div style={{ fontSize: '0.75rem', color: '#737373', marginBottom: '4px' }}>Account Number</div>
-                                        <div style={{ fontWeight: 500 }}>{retailer?.account_number || '--'}</div>
+                                        <div style={{ fontWeight: 500 }}>
+                                            {retailer?.account_number
+                                                ? '●●●●●●●●' + String(retailer.account_number).slice(-4)
+                                                : '--'}
+                                        </div>
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                                     <Landmark size={18} style={{ marginTop: '2px', color: '#737373', flexShrink: 0 }} />
                                     <div style={{ flex: 1 }}>
                                         <div style={{ fontSize: '0.75rem', color: '#737373', marginBottom: '4px' }}>IFSC Code</div>
-                                        <div style={{ fontWeight: 500 }}>{retailer?.ifsc_code || '--'}</div>
+                                        <div style={{ fontWeight: 500 }}>
+                                            {retailer?.ifsc_code
+                                                ? '●●●●●●' + String(retailer.ifsc_code).slice(-4)
+                                                : '--'}
+                                        </div>
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
