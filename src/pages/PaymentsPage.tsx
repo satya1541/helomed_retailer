@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Wallet, TrendingUp, DollarSign, CreditCard } from 'lucide-react';
+import { PAYMENT_STATUS, PAYMENT_STATUS_LABELS } from '@/constants';
 import {
     getRetailerEarningsByStatus,
     getRetailerEarningsMonthly,
@@ -35,12 +36,8 @@ const RetailerPaymentsPage = () => {
     };
 
     const getPaymentStatusLabel = (status?: number) => {
-        const map: Record<number, string> = {
-            1: 'Paid',
-            2: 'Pending'
-        };
         if (typeof status !== 'number') return '--';
-        return map[status] || `Payment ${status}`;
+        return PAYMENT_STATUS_LABELS[status] || `Payment ${status}`;
     };
 
     const fetchData = async () => {
@@ -334,7 +331,7 @@ const RetailerPaymentsPage = () => {
                                             <td><span className="font-semibold">₹{txn.earning ?? 0}</span></td>
                                             <td>{getOrderStatusLabel(txn.order_status)}</td>
                                             <td>
-                                                <span className={`badge ${txn.payment_status === 1 ? 'badge-success' : 'badge-warning'}`}>
+                                                <span className={`badge ${txn.payment_status === PAYMENT_STATUS.PAID ? 'badge-success' : 'badge-warning'}`}>
                                                     {getPaymentStatusLabel(txn.payment_status)}
                                                 </span>
                                             </td>
