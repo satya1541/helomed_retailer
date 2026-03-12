@@ -1,13 +1,17 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { X, ShoppingBag, Filter, Search, Wifi, WifiOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getRetailerOrderDetails, getRetailerOrders, updateRetailerOrderStatus } from '@/api/orders';
 import { ORDER_STATUS, ORDER_STATUS_LABELS } from '@/constants';
 import { useSocket } from '@/context/SocketContext';
+import { useNotifications } from '@/context/NotificationContext';
 import './Modern.css';
 
 const RetailerOrdersPage = () => {
     const { socket, isConnected } = useSocket();
+    const { addNotification } = useNotifications();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [orders, setOrders] = useState<any[]>([]);
     const [allOrdersForSearch, setAllOrdersForSearch] = useState<any[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -187,6 +191,7 @@ const RetailerOrdersPage = () => {
     useEffect(() => {
         if (!socket) return;
 
+        // Existing: order status updated
         const handleOrderUpdate = (data: { order_id: number; order_status: number }) => {
             const { order_id, order_status } = data;
 
@@ -225,11 +230,111 @@ const RetailerOrdersPage = () => {
             setTimeout(() => setLiveToast(null), 3000);
         };
 
+        // NEW: new_order — a new order was placed for this retailer
+        const handleNewOrder = (payload: any) => {
+            console.log('🆕 New order received:', payload);
+
+            // Prepend the new order to the list
+            const newOrder = {
+                id: payload.order_id,
+                order_id: payload.order_id,
+                order_number: payload.order_number,
+                order_status: payload.order_status,
+                total_amount: payload.total_amount,
+                items: payload.items,
+                created_at: payload.created_at,
+                payment_mode: payload.payment_mode,
+                payment_status: payload.payment_status,
+            };
+
+            setOrders(prev => [newOrder, ...prev]);
+            setAllOrdersForSearch(prev => [newOrder, ...prev]);
+            flashRow(payload.order_id);
+
+            setLiveToast(`🛒 New order received! #${payload.order_number || payload.order_id}`);
+            setTimeout(() => setLiveToast(null), 5000);
+
+            // Push to global notification bell
+            addNotification({
+                type: 'new_order',
+                title: 'New Order Received',
+                message: `Order #${payload.order_number || payload.order_id} — ₹${payload.total_amount || 0} (${payload.item_count || payload.items?.length || 0} items)`,
+                orderId: payload.order_id,
+                orderNumber: payload.order_number,
+            });
+        };
+
+        // NEW: order_assigned_to_delivery — delivery partner accepted
+        const handleDeliveryAssigned = (payload: any) => {
+            console.log('🚴 Delivery partner assigned:', payload);
+
+            const partnerName = payload.delivery_partner?.name || 'A delivery partner';
+            setLiveToast(`🚴 ${partnerName} assigned to order #${payload.order_number || payload.order_id}`);
+            setTimeout(() => setLiveToast(null), 4000);
+
+            addNotification({
+                type: 'delivery_assigned',
+                title: 'Delivery Partner Assigned',
+                message: `${partnerName} is assigned to pick up order #${payload.order_number || payload.order_id}`,
+                orderId: payload.order_id,
+                orderNumber: payload.order_number,
+            });
+        };
+
+        // NEW: delivery_partner_arrived — driver arrived at shop
+        const handleDeliveryArrived = (payload: any) => {
+            console.log('📍 Delivery partner arrived:', payload);
+
+            const partnerName = payload.delivery_partner?.name || 'Delivery partner';
+            setLiveToast(`📍 ${partnerName} has arrived to pick up order #${payload.order_number || payload.order_id}`);
+            setTimeout(() => setLiveToast(null), 5000);
+
+            addNotification({
+                type: 'delivery_arrived',
+                title: 'Driver Has Arrived!',
+                message: `${partnerName} is at your shop for order #${payload.order_number || payload.order_id}`,
+                orderId: payload.order_id,
+                orderNumber: payload.order_number,
+            });
+        };
+
         socket.on('order_status_updated', handleOrderUpdate);
+        socket.on('new_order', handleNewOrder);
+        socket.on('order_assigned_to_delivery', handleDeliveryAssigned);
+        socket.on('delivery_partner_arrived', handleDeliveryArrived);
+
         return () => {
             socket.off('order_status_updated', handleOrderUpdate);
+            socket.off('new_order', handleNewOrder);
+            socket.off('order_assigned_to_delivery', handleDeliveryAssigned);
+            socket.off('delivery_partner_arrived', handleDeliveryArrived);
         };
-    }, [socket, flashRow]);
+    }, [socket, flashRow, addNotification]);
+
+    // Auto-open order details when navigating via ?openOrder= URL param
+    useEffect(() => {
+        const openOrderId = searchParams.get('openOrder');
+        if (openOrderId && !loading) {
+            const orderId = Number(openOrderId);
+            // Clear the URL param so it doesn't re-trigger
+            setSearchParams({}, { replace: true });
+            // Find and open the order
+            const order = orders.find(o => (o.id === orderId || o.order_id === orderId));
+            if (order) {
+                handleView(order);
+            } else {
+                // Order not on current page — try to fetch it directly
+                (async () => {
+                    try {
+                        const details = await getRetailerOrderDetails(orderId);
+                        setSelectedOrder(normalizeOrderDetails(details, { id: orderId }));
+                    } catch {
+                        setNotice({ type: 'error', text: `Could not find order #${orderId}` });
+                    }
+                })();
+            }
+        }
+    }, [searchParams, loading, orders]);
 
     useEffect(() => {
         setNotice(null);

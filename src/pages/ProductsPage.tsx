@@ -261,7 +261,7 @@ const RetailerProductsPage = () => {
                     <p>Manage your inventory and pricing.</p>
                 </div>
                 {/* Search Bar */}
-                <div className="search-bar" style={{ flex: '0 1 320px', maxWidth: '320px' }}>
+                <div className="search-bar" style={{ flex: '1 1 100%', maxWidth: '320px' }}>
                     <Search size={16} />
                     <input
                         type="text"
@@ -276,6 +276,7 @@ const RetailerProductsPage = () => {
                     onClick={() => setShowForm(true)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    style={{ flexShrink: 0 }}
                 >
                     <Plus size={16} />
                     Add Product

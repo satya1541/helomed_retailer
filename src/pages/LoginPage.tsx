@@ -15,8 +15,8 @@ interface PupilProps {
   forceLookY?: number;
 }
 
-const Pupil = ({ 
-  size = 12, 
+const Pupil = ({
+  size = 12,
   maxDistance = 5,
   pupilColor = "black",
   forceLookX,
@@ -90,9 +90,9 @@ interface EyeBallProps {
   forceLookY?: number;
 }
 
-const EyeBall = ({ 
-  size = 48, 
-  pupilSize = 16, 
+const EyeBall = ({
+  size = 48,
+  pupilSize = 16,
   maxDistance = 10,
   eyeColor = "white",
   pupilColor = "black",
@@ -304,7 +304,7 @@ function LoginPage() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    
+
     if (!phone || phone.length < 10) {
       setError('Please enter a valid 10-digit phone number');
       return;
@@ -323,7 +323,7 @@ function LoginPage() {
 
   const verifyOtp = async (otpValue: string) => {
     setError('');
-    
+
     if (!otpValue || otpValue.length !== 4) {
       setError('Please enter a valid 4-digit OTP');
       return;
@@ -334,8 +334,12 @@ function LoginPage() {
       const response = await retailerVerifyOtp(phone, otpValue);
       const token = response?.token || response?.access_token;
       const userData = response?.retailer || response?.user || response;
-      
+
       if (token) {
+        // Dismiss mobile keyboard before navigating
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
         login(token, userData);
         navigate('/dashboard');
       } else {
@@ -354,9 +358,9 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
+    <div className="min-h-screen grid lg:grid-cols-2 overflow-x-hidden">
       {/* Left Content Section */}
-      <div className="relative hidden lg:flex flex-col justify-between bg-gradient-to-br from-primary/90 via-primary to-primary/80 p-12 text-primary-foreground">
+      <div className="relative flex flex-col justify-between bg-gradient-to-br from-primary/90 via-primary to-primary/80 p-6 lg:p-12 text-primary-foreground overflow-hidden">
         <div className="relative z-20">
           <div className="flex items-center gap-3 text-lg font-semibold">
             <img src="/images/logo.png" alt="Helo-Med" className="w-10 h-10 object-contain bg-white rounded-lg p-1" />
@@ -364,11 +368,11 @@ function LoginPage() {
           </div>
         </div>
 
-        <div className="relative z-20 flex items-end justify-center h-[500px]">
+        <div className="relative z-20 flex items-end justify-center h-[200px] lg:h-[500px] overflow-hidden">
           {/* Cartoon Characters */}
-          <div className="relative" style={{ width: '550px', height: '400px' }}>
+          <div className="relative scale-[0.45] lg:scale-100 origin-bottom" style={{ width: '550px', height: '400px' }}>
             {/* Purple tall rectangle character - Back layer */}
-            <div 
+            <div
               ref={purpleRef}
               className="absolute bottom-0 transition-all duration-700 ease-in-out"
               style={{
@@ -381,35 +385,35 @@ function LoginPage() {
                 transform: (otp.length > 0 && showOtp)
                   ? `skewX(0deg)`
                   : (isTyping || (otp.length > 0 && !showOtp))
-                    ? `skewX(${(purplePos.bodySkew || 0) - 12}deg) translateX(40px)` 
+                    ? `skewX(${(purplePos.bodySkew || 0) - 12}deg) translateX(40px)`
                     : `skewX(${purplePos.bodySkew || 0}deg)`,
                 transformOrigin: 'bottom center',
               }}
             >
               {/* Eyes */}
-              <div 
+              <div
                 className="absolute flex gap-8 transition-all duration-700 ease-in-out"
                 style={{
                   left: (otp.length > 0 && showOtp) ? `${20}px` : isLookingAtEachOther ? `${55}px` : `${45 + purplePos.faceX}px`,
                   top: (otp.length > 0 && showOtp) ? `${35}px` : isLookingAtEachOther ? `${65}px` : `${40 + purplePos.faceY}px`,
                 }}
               >
-                <EyeBall 
-                  size={18} 
-                  pupilSize={7} 
-                  maxDistance={5} 
-                  eyeColor="white" 
-                  pupilColor="#2D2D2D" 
+                <EyeBall
+                  size={18}
+                  pupilSize={7}
+                  maxDistance={5}
+                  eyeColor="white"
+                  pupilColor="#2D2D2D"
                   isBlinking={isPurpleBlinking}
                   forceLookX={(otp.length > 0 && showOtp) ? (isPurplePeeking ? 4 : -4) : isLookingAtEachOther ? 3 : undefined}
                   forceLookY={(otp.length > 0 && showOtp) ? (isPurplePeeking ? 5 : -4) : isLookingAtEachOther ? 4 : undefined}
                 />
-                <EyeBall 
-                  size={18} 
-                  pupilSize={7} 
-                  maxDistance={5} 
-                  eyeColor="white" 
-                  pupilColor="#2D2D2D" 
+                <EyeBall
+                  size={18}
+                  pupilSize={7}
+                  maxDistance={5}
+                  eyeColor="white"
+                  pupilColor="#2D2D2D"
                   isBlinking={isPurpleBlinking}
                   forceLookX={(otp.length > 0 && showOtp) ? (isPurplePeeking ? 4 : -4) : isLookingAtEachOther ? 3 : undefined}
                   forceLookY={(otp.length > 0 && showOtp) ? (isPurplePeeking ? 5 : -4) : isLookingAtEachOther ? 4 : undefined}
@@ -418,7 +422,7 @@ function LoginPage() {
             </div>
 
             {/* Black tall rectangle character - Middle layer */}
-            <div 
+            <div
               ref={blackRef}
               className="absolute bottom-0 transition-all duration-700 ease-in-out"
               style={{
@@ -433,35 +437,35 @@ function LoginPage() {
                   : isLookingAtEachOther
                     ? `skewX(${(blackPos.bodySkew || 0) * 1.5 + 10}deg) translateX(20px)`
                     : (isTyping || (otp.length > 0 && !showOtp))
-                      ? `skewX(${(blackPos.bodySkew || 0) * 1.5}deg)` 
+                      ? `skewX(${(blackPos.bodySkew || 0) * 1.5}deg)`
                       : `skewX(${blackPos.bodySkew || 0}deg)`,
                 transformOrigin: 'bottom center',
               }}
             >
               {/* Eyes */}
-              <div 
+              <div
                 className="absolute flex gap-6 transition-all duration-700 ease-in-out"
                 style={{
                   left: (otp.length > 0 && showOtp) ? `${10}px` : isLookingAtEachOther ? `${32}px` : `${26 + blackPos.faceX}px`,
                   top: (otp.length > 0 && showOtp) ? `${28}px` : isLookingAtEachOther ? `${12}px` : `${32 + blackPos.faceY}px`,
                 }}
               >
-                <EyeBall 
-                  size={16} 
-                  pupilSize={6} 
-                  maxDistance={4} 
-                  eyeColor="white" 
-                  pupilColor="#2D2D2D" 
+                <EyeBall
+                  size={16}
+                  pupilSize={6}
+                  maxDistance={4}
+                  eyeColor="white"
+                  pupilColor="#2D2D2D"
                   isBlinking={isBlackBlinking}
                   forceLookX={(otp.length > 0 && showOtp) ? -4 : isLookingAtEachOther ? 0 : undefined}
                   forceLookY={(otp.length > 0 && showOtp) ? -4 : isLookingAtEachOther ? -4 : undefined}
                 />
-                <EyeBall 
-                  size={16} 
-                  pupilSize={6} 
-                  maxDistance={4} 
-                  eyeColor="white" 
-                  pupilColor="#2D2D2D" 
+                <EyeBall
+                  size={16}
+                  pupilSize={6}
+                  maxDistance={4}
+                  eyeColor="white"
+                  pupilColor="#2D2D2D"
                   isBlinking={isBlackBlinking}
                   forceLookX={(otp.length > 0 && showOtp) ? -4 : isLookingAtEachOther ? 0 : undefined}
                   forceLookY={(otp.length > 0 && showOtp) ? -4 : isLookingAtEachOther ? -4 : undefined}
@@ -470,7 +474,7 @@ function LoginPage() {
             </div>
 
             {/* Orange semi-circle character - Front left */}
-            <div 
+            <div
               ref={orangeRef}
               className="absolute bottom-0 transition-all duration-700 ease-in-out"
               style={{
@@ -485,7 +489,7 @@ function LoginPage() {
               }}
             >
               {/* Eyes - just pupils, no white */}
-              <div 
+              <div
                 className="absolute flex gap-8 transition-all duration-200 ease-out"
                 style={{
                   left: (otp.length > 0 && showOtp) ? `${50}px` : `${82 + (orangePos.faceX || 0)}px`,
@@ -498,7 +502,7 @@ function LoginPage() {
             </div>
 
             {/* Yellow tall rectangle character - Front right */}
-            <div 
+            <div
               ref={yellowRef}
               className="absolute bottom-0 transition-all duration-700 ease-in-out"
               style={{
@@ -513,7 +517,7 @@ function LoginPage() {
               }}
             >
               {/* Eyes - just pupils, no white */}
-              <div 
+              <div
                 className="absolute flex gap-6 transition-all duration-200 ease-out"
                 style={{
                   left: (otp.length > 0 && showOtp) ? `${20}px` : `${52 + (yellowPos.faceX || 0)}px`,
@@ -524,7 +528,7 @@ function LoginPage() {
                 <Pupil size={12} maxDistance={5} pupilColor="#2D2D2D" forceLookX={(otp.length > 0 && showOtp) ? -5 : undefined} forceLookY={(otp.length > 0 && showOtp) ? -4 : undefined} />
               </div>
               {/* Horizontal line for mouth */}
-              <div 
+              <div
                 className="absolute w-20 h-[4px] bg-[#2D2D2D] rounded-full transition-all duration-200 ease-out"
                 style={{
                   left: (otp.length > 0 && showOtp) ? `${10}px` : `${40 + (yellowPos.faceX || 0)}px`,
@@ -535,7 +539,7 @@ function LoginPage() {
           </div>
         </div>
 
-        <div className="relative z-20 flex items-center gap-8 text-sm text-primary-foreground/60">
+        <div className="relative z-20 hidden lg:flex items-center gap-8 text-sm text-primary-foreground/60">
           <a href="/privacy-policy" className="hover:text-primary-foreground transition-colors">
             Privacy Policy
           </a>
@@ -554,17 +558,13 @@ function LoginPage() {
       </div>
 
       {/* Right Login Section */}
-      <div className="flex items-center justify-center p-8 bg-background">
+      <div className="flex items-center justify-center p-4 md:p-8 bg-background">
         <div className="w-full max-w-[420px]">
-          {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center justify-center gap-3 text-lg font-semibold mb-12">
-            <img src="/images/logo.png" alt="Helo-Med" className="w-10 h-10 object-contain" />
-            <span>HeloMed Retailer</span>
-          </div>
+          {/* Mobile Logo - hidden since animation panel now shows on mobile */}
 
           {/* Header */}
           <div className="text-center mb-10">
-            <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome back!</h1>
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome</h1>
             <p className="text-muted-foreground text-sm">Please enter your details</p>
           </div>
 
@@ -596,10 +596,10 @@ function LoginPage() {
                 </div>
               )}
 
-              <Button 
-                type="submit" 
-                className="w-full h-12 text-base font-medium" 
-                size="lg" 
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-medium"
+                size="lg"
                 disabled={isLoading || phone.length < 10}
               >
                 {isLoading ? "Sending OTP..." : "Send OTP"}
@@ -649,10 +649,10 @@ function LoginPage() {
                 </div>
               )}
 
-              <Button 
-                type="submit" 
-                className="w-full h-12 text-base font-medium" 
-                size="lg" 
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-medium"
+                size="lg"
                 disabled={isLoading || otp.length !== 4}
               >
                 {isLoading ? "Verifying..." : "Verify & Sign In"}

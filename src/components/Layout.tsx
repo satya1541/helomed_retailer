@@ -3,6 +3,7 @@ import { LogOut } from 'lucide-react';
 import { useRetailerAuth } from '@/context/AuthContext';
 import { retailerLogout } from '@/api/auth';
 import { AnimatedNavigationTabs } from '@/components/ui/animated-navigation-tabs';
+import { NotificationBell } from '@/components/NotificationBell';
 import { Footer } from '@/components/ui/modem-animated-footer';
 import './Layout.css';
 
@@ -57,7 +58,8 @@ const RetailerLayout = ({ children }: { children: React.ReactNode }) => {
                     <AnimatedNavigationTabs items={navigationItems} />
                 </div>
 
-                <div className="retailer-header-right">
+                <div className="retailer-header-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <NotificationBell />
                     <button className="retailer-logout-header" onClick={handleLogout}>
                         <LogOut size={18} />
                         <span className="logout-text">Logout</span>

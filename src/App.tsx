@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { RetailerAuthProvider, useRetailerAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 // Pages
 import LoginPage from './pages/LoginPage';
@@ -38,6 +39,7 @@ function App() {
   return (
     <RetailerAuthProvider>
       <SocketProvider>
+      <NotificationProvider>
       <Router>
         <Routes>
           {/* Public Routes */}
@@ -119,6 +121,7 @@ function App() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
+      </NotificationProvider>
       </SocketProvider>
     </RetailerAuthProvider>
   );

@@ -172,7 +172,7 @@ const RetailerAllProductsPage = () => {
                     <p>Browse the master catalog and add items to your inventory.</p>
                 </div>
                 {/* Search Bar with Suggestions */}
-                <div style={{ position: 'relative', flex: '0 1 400px', maxWidth: '400px' }}>
+                <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
                     <div className="search-bar">
                         <Search size={16} />
                         <input

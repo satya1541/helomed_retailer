@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRetailerAuth } from '@/context/AuthContext';
+import { useSocket } from '@/context/SocketContext';
+import { useNotifications } from '@/context/NotificationContext';
 import { TrendingUp, ShoppingBag, IndianRupee, Package, RefreshCw, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getRetailerOrders } from '@/api/orders';
 import { getRetailerProducts } from '@/api/products';
 import { getRetailerEarningsToday, getRetailerEarningsTotal } from '@/api/payments';
@@ -10,6 +12,9 @@ import './Modern.css';
 
 const RetailerDashboardPage = () => {
     const { retailer } = useRetailerAuth();
+    const { socket } = useSocket();
+    const { addNotification } = useNotifications();
+    const [liveToast, setLiveToast] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -64,6 +69,35 @@ const RetailerDashboardPage = () => {
     useEffect(() => {
         fetchDashboardData();
     }, [fetchDashboardData]);
+
+    // Listen for new_order socket event to auto-refresh dashboard
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewOrder = (payload: any) => {
+            console.log('🆕 [Dashboard] New order received:', payload);
+
+            // Auto-refresh dashboard data
+            fetchDashboardData(true);
+
+            setLiveToast(`🛒 New order received! #${payload.order_number || payload.order_id}`);
+            setTimeout(() => setLiveToast(null), 5000);
+
+            // Push to global notification bell
+            addNotification({
+                type: 'new_order',
+                title: 'New Order Received',
+                message: `Order #${payload.order_number || payload.order_id} — ₹${payload.total_amount || 0}`,
+                orderId: payload.order_id,
+                orderNumber: payload.order_number,
+            });
+        };
+
+        socket.on('new_order', handleNewOrder);
+        return () => {
+            socket.off('new_order', handleNewOrder);
+        };
+    }, [socket, fetchDashboardData, addNotification]);
 
     const getStatusLabel = (status: number) => {
         return (ORDER_STATUS_LABELS as Record<number, string>)[status] || `Status ${status}`;
@@ -124,6 +158,35 @@ const RetailerDashboardPage = () => {
 
     return (
         <div className="modern-page">
+            {/* Live toast notification for new orders */}
+            <AnimatePresence>
+                {liveToast && (
+                    <motion.div
+                        key="dashboard-toast"
+                        initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                        transition={{ duration: 0.2 }}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 16px',
+                            borderRadius: '8px',
+                            background: 'rgba(34,197,94,0.1)',
+                            border: '1px solid rgba(34,197,94,0.25)',
+                            color: '#15803d',
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                            marginBottom: '12px'
+                        }}
+                    >
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
+                        {liveToast}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Header */}
             <motion.div 
                 className="modern-header"

@@ -24,8 +24,8 @@ export function AnimatedNavigationTabs({ items }: { items: NavItem[] }) {
   };
 
   return (
-    <div className="w-full flex items-center justify-center">
-      <ul className="flex items-center justify-center gap-1">
+    <div className="w-full flex items-center justify-start md:justify-center overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-1">
+      <ul className="flex items-center justify-start md:justify-center gap-1 min-w-max">
         {items.map((item) => (
           <li key={item.id}>
             <button

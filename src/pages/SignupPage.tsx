@@ -221,15 +221,15 @@ export default function SignupPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-white to-primary/5 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 py-12 px-4">
       <div className="max-w-3xl mx-auto">
         <motion.div initial={{opacity: 0, y: 20}} animate={{opacity: 1, y: 0}}>
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 mt-6">
             <div className="inline-flex items-center justify-center mb-4">
-              <img src="/images/logo.png" alt="Helo-Med" className="w-24 h-24 object-contain" />
+              <img src="/images/logo.png" alt="Helo-Med" className="w-20 h-20 md:w-24 md:h-24 object-contain" />
             </div>
-            <h1 className="text-4xl font-bold text-zinc-900 dark:text-white mb-2">Join Helo-Med</h1>
-            <p className="text-zinc-600 dark:text-zinc-400">Complete registration to start selling</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 dark:text-white mb-2">Join Helo-Med</h1>
+            <p className="text-sm md:text-base text-zinc-600 dark:text-zinc-400">Complete registration to start selling</p>
           </div>
 
-          <div className="flex justify-center items-start mb-12">
+          <div className="flex justify-between md:justify-center items-start mb-8 md:mb-12 overflow-x-auto pb-4 px-2">
             {steps.map((step, index) => (
               <div key={step.number} className="flex flex-col items-center relative" style={{width: '140px'}}>
                 <div className="flex items-center justify-center relative">
@@ -243,7 +243,7 @@ export default function SignupPage() {
             ))}
           </div>
 
-          <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 border border-zinc-200 dark:border-zinc-700">
+          <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl md:shadow-2xl p-5 md:p-8 border border-zinc-200 dark:border-zinc-700">
             {error && (
               <motion.div initial={{opacity: 0, x: -10}} animate={{opacity: 1, x: 0}} className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                 <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -294,7 +294,7 @@ export default function SignupPage() {
                         <textarea value={formData.fullAddress} onChange={(e) => updateField('fullAddress', e.target.value)} placeholder="Complete shop address" required rows={3} className="block w-full pl-10 pr-3 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"><Hash className="inline w-4 h-4 mr-1" />Pincode *</label>
                         <input type="text" value={formData.pincode} onChange={(e) => updateField('pincode', e.target.value)} placeholder="751002" required className={inputClass} />
@@ -308,7 +308,7 @@ export default function SignupPage() {
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Landmark</label>
                       <input type="text" value={formData.landmark} onChange={(e) => updateField('landmark', e.target.value)} placeholder="Near City Hospital" className={inputClass} />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Latitude</label>
                         <input type="number" step="any" value={formData.latitude} onChange={(e) => updateField('latitude', e.target.value)} placeholder="19.0760" className={inputClass} />
@@ -318,7 +318,7 @@ export default function SignupPage() {
                         <input type="number" step="any" value={formData.longitude} onChange={(e) => updateField('longitude', e.target.value)} placeholder="72.8777" className={inputClass} />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2"><Clock className="inline w-4 h-4 mr-1" />Opening</label>
                         <input type="time" value={formData.openingTime} onChange={(e) => updateField('openingTime', e.target.value)} className={inputClass} />
@@ -351,7 +351,7 @@ export default function SignupPage() {
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">GST Number</label>
                       <input type="text" value={formData.gstNumber} onChange={(e) => updateField('gstNumber', e.target.value)} placeholder="22AAAAA0000A1Z5" className={inputClass} />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Aadhaar Number</label>
                         <input type="text" value={formData.aadhaarNumber} onChange={(e) => updateField('aadhaarNumber', e.target.value)} placeholder="12-digit" className={inputClass} />
@@ -362,12 +362,12 @@ export default function SignupPage() {
                       </div>
                     </div>
                     <hr className="border-zinc-200 dark:border-zinc-700" />
-                    <h3 className="font-semibold text-zinc-900 dark:text-white flex items-center gap-2"><CreditCard className="w-5 h-5" />Bank Account Details</h3>
+                    <h3 className="font-semibold text-zinc-900 dark:text-white flex items-center gap-2 text-sm md:text-base"><CreditCard className="w-5 h-5" />Bank Account Details</h3>
                     <div>
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Account Holder Name</label>
                       <input type="text" value={formData.accountHolderName} onChange={(e) => updateField('accountHolderName', e.target.value)} placeholder="Full name" className={inputClass} />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Account Number</label>
                         <input type="text" value={formData.accountNumber} onChange={(e) => updateField('accountNumber', e.target.value)} placeholder="Account number" className={inputClass} />

@@ -123,25 +123,34 @@
         height: auto;
         padding: 1rem 1.5rem;
         gap: 1rem;
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     .retailer-header-left {
-        flex: 0 0 auto;
+        flex: 1 1 100%;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .retailer-header-center {
         order: 3;
         flex: 1 1 100%;
         max-width: 100%;
+        width: 100%;
     }
 
     .retailer-header-right {
-        flex: 0 0 auto;
-        min-width: auto;
+        order: 2;
+        flex: 1 1 100%;
+        width: 100%;
+        justify-content: flex-end;
     }
 
     .logout-text {
-        display: none;
+        display: inline-block;
     }
 
     .retailer-logout-header {
@@ -158,8 +167,9 @@
         padding: 1rem;
     }
 
+    /* We keep the brand text on mobile now since we stacked it */
     .retailer-brand-text {
-        display: none;
+        display: block;
     }
 
     .retailer-content-header {

@@ -4,9 +4,9 @@ export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/5 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 py-12 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-8 md:p-12 border border-zinc-200 dark:border-zinc-700">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+        <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-5 md:p-12 border border-zinc-200 dark:border-zinc-700">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
               <Shield className="w-6 h-6 text-primary" />
             </div>
             <div>

@@ -25,16 +25,19 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         const SOCKET_URL = import.meta.env.VITE_API_BASE_URL || 'https://helo.thynxai.cloud';
 
+        // Option A: Pass token in auth object for automatic room joining
         const newSocket = io(SOCKET_URL, {
+            auth: {
+                token: token
+            },
             transports: ['websocket'],
             reconnectionAttempts: 5,
             reconnectionDelay: 2000,
         });
 
         newSocket.on('connect', () => {
-            console.log('Socket connected');
+            console.log('Socket connected with ID:', newSocket.id);
             setIsConnected(true);
-            newSocket.emit('join_room', { token, role: 'retailer' });
         });
 
         newSocket.on('disconnect', () => {
