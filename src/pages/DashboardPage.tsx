@@ -254,7 +254,7 @@ const RetailerDashboardPage = () => {
                             <table className="modern-table">
                                 <thead>
                                     <tr>
-                                        <th>Order ID</th>
+                                        <th>Order Number</th>
                                         <th>Customer</th>
                                         <th>Items</th>
                                         <th>Amount</th>
@@ -273,10 +273,10 @@ const RetailerDashboardPage = () => {
                                                 transition={{ duration: 0.2 }}
                                             >
                                                 <td>
-                                                    <span className="font-semibold">#{order.id}</span>
+                                                    <span className="font-semibold">{order.order_number || `#${order.id}`}</span>
                                                 </td>
                                                 <td>
-                                                    {order.customer_name || order.user_name || 'Customer'}
+                                                    {order.user?.name || order.customer_name || order.user_name || 'Customer'}
                                                 </td>
                                                 <td>
                                                     {order.items?.length || order.item_count || 0} items
@@ -291,7 +291,24 @@ const RetailerDashboardPage = () => {
                                                 </td>
                                                 <td>
                                                     <span className="text-sm" style={{ color: '#737373' }}>
-                                                        {formatTime(order.created_at || order.createdAt)}
+                                                        {(() => {
+                                                            const dateStr = order.createdAt || order.created_at;
+                                                            if (dateStr) {
+                                                                return new Date(dateStr).toLocaleString('en-IN', {
+                                                                    day: '2-digit', month: 'short', year: 'numeric',
+                                                                    hour: '2-digit', minute: '2-digit', hour12: true
+                                                                });
+                                                            }
+                                                            // Extract timestamp from order_number like ORD1773312385828
+                                                            const match = (order.order_number || '').match(/ORD(\d{13})/);
+                                                            if (match) {
+                                                                return new Date(parseInt(match[1])).toLocaleString('en-IN', {
+                                                                    day: '2-digit', month: 'short', year: 'numeric',
+                                                                    hour: '2-digit', minute: '2-digit', hour12: true
+                                                                });
+                                                            }
+                                                            return '--';
+                                                        })()}
                                                     </span>
                                                 </td>
                                             </motion.tr>
