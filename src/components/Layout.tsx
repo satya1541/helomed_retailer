@@ -18,8 +18,8 @@ const RetailerLayout = ({ children }: { children: React.ReactNode }) => {
             // Continue with local logout even if API call fails
         } finally {
             logout();
-            // Redirect to main login
-            navigate('/login');
+            // Force a full page reload to clear all in-memory state (like notifications)
+            window.location.href = '/login';
         }
     };
 
