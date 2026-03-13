@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 export interface AppNotification {
     id: string;
@@ -24,15 +24,37 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType>({
     notifications: [],
     unreadCount: 0,
-    addNotification: () => {},
-    markAsRead: () => {},
-    markAllAsRead: () => {},
-    removeNotification: () => {},
-    clearAll: () => {},
+    addNotification: () => { },
+    markAsRead: () => { },
+    markAllAsRead: () => { },
+    removeNotification: () => { },
+    clearAll: () => { },
 });
 
+const STORAGE_KEY = 'helo_med_retailer_notifications';
+
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [notifications, setNotifications] = useState<AppNotification[]>([]);
+    // Initialize notifications from localStorage
+    const [notifications, setNotifications] = useState<AppNotification[]>(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return [];
+        try {
+            const parsed = JSON.parse(saved);
+            // Revitalize Date objects
+            return parsed.map((n: any) => ({
+                ...n,
+                timestamp: new Date(n.timestamp)
+            }));
+        } catch (e) {
+            console.error('Failed to parse saved notifications:', e);
+            return [];
+        }
+    });
+
+    // Save notifications to localStorage whenever they change
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
+    }, [notifications]);
 
     const unreadCount = notifications.filter(n => !n.read).length;
 

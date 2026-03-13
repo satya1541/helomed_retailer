@@ -41,8 +41,16 @@ export const NotificationBell = () => {
     const navigate = useNavigate();
     const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, clearAll } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
     const panelRef = useRef<HTMLDivElement>(null);
     const bellRef = useRef<HTMLButtonElement>(null);
+
+    // Handle resize to update isMobile
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 640);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Close panel when clicking outside
     useEffect(() => {
@@ -85,6 +93,7 @@ export const NotificationBell = () => {
                     background: isOpen ? '#f5f5f5' : 'white',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
+                    zIndex: isOpen ? 1001 : 1,
                 }}
             >
                 <Bell size={18} color="#525252" />
@@ -132,9 +141,9 @@ export const NotificationBell = () => {
                         style={{
                             position: 'absolute',
                             top: 'calc(100% + 8px)',
-                            right: 0,
-                            width: 380,
-                            maxWidth: 'calc(100vw - 32px)',
+                            right: isMobile ? -56 : 0, // Offset horizontally on mobile to keep it centered or visible
+                            width: isMobile ? 'calc(100vw - 32px)' : 380,
+                            maxWidth: isMobile ? 380 : 'unset',
                             background: 'white',
                             borderRadius: 12,
                             border: '1px solid #e5e5e5',
